@@ -3,7 +3,14 @@ name = "bevy-fp-template"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[profile.release]
+codegen-units = 1
+
+[profile.dev.package.bevy]
+opt-level = 1
+
+[profile.dev.package.bevy_rapier3d]
+opt-level = 3
 
 [dependencies]
 # https://github.com/bevyengine/bevy

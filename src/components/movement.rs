@@ -5,7 +5,7 @@ const MOVEMENT_DIRECTION_MARGIN: f32 = 0.01f32;
 /// This enum defines the direction in which the player wants an entity with a [`FirstPersonSubject`](crate::components::FirstPersonSubject) component to move.
 /// The inner value specifies the magnitude (or speed) with which the subject
 /// should change its position.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum MovementDirection {
     Left(f32),
     Right(f32),
@@ -67,6 +67,14 @@ impl Movement {
 
     pub fn set_forward_back(&mut self, direction: MovementDirection) {
         self.forward_back = direction;
+    }
+
+    pub fn left_right(&self) -> MovementDirection {
+        self.left_right
+    }
+
+    pub fn forward_back(&self) -> MovementDirection {
+        self.forward_back
     }
 }
 

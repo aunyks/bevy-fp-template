@@ -5,7 +5,7 @@ const LOOKAROUND_DIRECTION_MARGIN: f32 = 0.01f32;
 /// This enum defines the direction in which the player wants an entity with a [`FirstPersonSubject`](crate::components::FirstPersonSubject) component to look.
 /// The inner value specifies the magnitude (or speed) with which the subject
 /// should change its orientation.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum LookaroundDirection {
     Left(f32),
     Right(f32),
@@ -65,6 +65,14 @@ impl Lookaround {
 
     pub fn set_up_down(&mut self, direction: LookaroundDirection) {
         self.up_down = direction;
+    }
+
+    pub fn left_right(&self) -> LookaroundDirection {
+        self.left_right
+    }
+
+    pub fn up_down(&self) -> LookaroundDirection {
+        self.up_down
     }
 }
 
