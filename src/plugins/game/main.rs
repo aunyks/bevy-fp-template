@@ -8,6 +8,9 @@ use bevy::prelude::*;
 use bevy_rapier3d::na::{Point3, Vector3};
 use bevy_rapier3d::prelude::*;
 
+/// The force applied to the FirstPersonSubject during movement
+const MOVEMENT_FORCE_MULTIPLIER: f32 = 1000f32;
+
 /// This plugin manages gameplay for the main game level
 pub struct MainGameLevel;
 
@@ -21,7 +24,8 @@ impl Plugin for MainGameLevel {
         .add_system_set(
             SystemSet::on_update(GameLevel::Main)
                 .with_system(rotate_player_body)
-                .with_system(rotate_player_head),
+                .with_system(rotate_player_head)
+                .with_system(move_player_body),
         )
         .add_system_set(
             SystemSet::on_exit(GameLevel::Main)
@@ -117,7 +121,7 @@ fn setup_level(
             )
             .into(),
             material: ColliderMaterial {
-                restitution: 0.7,
+                restitution: 0.9,
                 ..Default::default()
             }
             .into(),
@@ -238,46 +242,39 @@ fn rotate_player_body(
     }
 }
 
-// fn move_player_body(
-//     mut query: Query<
-//         (
-//             &Movement,
-//             &RigidBodyPositionComponent,
-//             &mut RigidBodySet,
-//         ),
-//         With<FirstPersonSubject>,
-//     >,
-// ) {
-//     match query.get_single_mut() {
-//         Ok((movement, body_pos, mut body)) => {
-//             match movement.left_right() {
-//                 MovementDirection::Left(magnitude) => {
-//                     body.apply_force_at_point(rb_mprops, force, point);
-//                 }
-//                 MovementDirection::Right(magnitude) => {
-//                     body.apply_force_at_point(rb_mprops, force, point);
-//                 }
-//                 _ => {
-//                     panic!("Movement left_right() was neither Left nor Right!")
-//                 }
-//             };
-//             match movement.forward_back() {
-//                 MovementDirection::Forward(magnitude) => {
-//                     body.apply_force_at_point(rb_mprops, force, point);
-//                 }
-//                 MovementDirection::Back(magnitude) => {
-//                     body.apply_force_at_point(rb_mprops, force, point);
-//                 }
-//                 _ => {
-//                     panic!("Movement forward_back() was neither Forward nor Back!")
-//                 }
-//             };
-//         }
-//         Err(_) => {
-//             panic!("Could not find a player while querying during moving the player body!");
-//         }
-//     }
-// }
+fn move_player_body(
+    mut query: Query<
+        (&Movement, &Transform, &mut RigidBodyForcesComponent),
+        With<FirstPersonSubject>,
+    >,
+) {
+    match query.get_single_mut() {
+        Ok((movement, subject_transform, mut body_force)) => {
+            let local_z = subject_transform.local_z();
+            let forward = -Vec3::new(local_z.x, 0., local_z.z);
+            let right = Vec3::new(local_z.z, 0., -local_z.x);
+            let left_right_magnitude = match movement.left_right() {
+                MovementDirection::Left(magnitude) => -magnitude * MOVEMENT_FORCE_MULTIPLIER,
+                MovementDirection::Right(magnitude) => magnitude * MOVEMENT_FORCE_MULTIPLIER,
+                _ => {
+                    panic!("Movement left_right() was neither Left nor Right!")
+                }
+            };
+            let forward_back_magnitude = match movement.forward_back() {
+                MovementDirection::Forward(magnitude) => magnitude * MOVEMENT_FORCE_MULTIPLIER,
+                MovementDirection::Back(magnitude) => -magnitude * MOVEMENT_FORCE_MULTIPLIER,
+                _ => {
+                    panic!("Movement forward_back() was neither Forward nor Back!")
+                }
+            };
+            body_force.force =
+                (forward * forward_back_magnitude + right * left_right_magnitude).into();
+        }
+        Err(_) => {
+            panic!("Could not find a player while querying during moving the player body!");
+        }
+    }
+}
 
 fn teardown_main_game_level(mut commands: Commands) {
     commands.remove_resource::<AmbientLight>();
