@@ -8,10 +8,12 @@ use bevy::prelude::*;
 use bevy_rapier3d::na::{Point3, Vector3};
 use bevy_rapier3d::prelude::*;
 
-/// The force applied to the FirstPersonSubject during movement
+/// The force applied to the FirstPersonSubject during movement.
+/// Unsure of units but likely in Newtons
 const PLAYER_MOVEMENT_FORCE_MULTIPLIER: f32 = 1000f32;
 
-/// The max speed of the FirstPersonSubject
+/// The max speed of the FirstPersonSubject.
+/// Unsure of units but likely in meters per second
 const PLAYER_MAX_SPEED: f32 = 5f32;
 
 /// This plugin manages gameplay for the main game level
