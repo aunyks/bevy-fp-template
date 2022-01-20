@@ -9,7 +9,10 @@ use bevy_rapier3d::na::{Point3, Vector3};
 use bevy_rapier3d::prelude::*;
 
 /// The force applied to the FirstPersonSubject during movement
-const MOVEMENT_FORCE_MULTIPLIER: f32 = 1000f32;
+const PLAYER_MOVEMENT_FORCE_MULTIPLIER: f32 = 1000f32;
+
+/// The max speed of the FirstPersonSubject
+const PLAYER_MAX_SPEED: f32 = 5f32;
 
 /// This plugin manages gameplay for the main game level
 pub struct MainGameLevel;
@@ -122,6 +125,8 @@ fn setup_level(
             .into(),
             material: ColliderMaterial {
                 restitution: 0.9,
+                friction: 1f32,
+                friction_combine_rule: CoefficientCombineRule::Max,
                 ..Default::default()
             }
             .into(),
@@ -244,31 +249,46 @@ fn rotate_player_body(
 
 fn move_player_body(
     mut query: Query<
-        (&Movement, &Transform, &mut RigidBodyForcesComponent),
+        (
+            &Movement,
+            &Transform,
+            &mut RigidBodyForcesComponent,
+            &RigidBodyVelocityComponent,
+        ),
         With<FirstPersonSubject>,
     >,
 ) {
     match query.get_single_mut() {
-        Ok((movement, subject_transform, mut body_force)) => {
-            let local_z = subject_transform.local_z();
-            let forward = -Vec3::new(local_z.x, 0., local_z.z);
-            let right = Vec3::new(local_z.z, 0., -local_z.x);
-            let left_right_magnitude = match movement.left_right() {
-                MovementDirection::Left(magnitude) => -magnitude * MOVEMENT_FORCE_MULTIPLIER,
-                MovementDirection::Right(magnitude) => magnitude * MOVEMENT_FORCE_MULTIPLIER,
-                _ => {
-                    panic!("Movement left_right() was neither Left nor Right!")
-                }
-            };
-            let forward_back_magnitude = match movement.forward_back() {
-                MovementDirection::Forward(magnitude) => magnitude * MOVEMENT_FORCE_MULTIPLIER,
-                MovementDirection::Back(magnitude) => -magnitude * MOVEMENT_FORCE_MULTIPLIER,
-                _ => {
-                    panic!("Movement forward_back() was neither Forward nor Back!")
-                }
-            };
-            body_force.force =
-                (forward * forward_back_magnitude + right * left_right_magnitude).into();
+        Ok((movement, subject_transform, mut body_force, body_velocity)) => {
+            if body_velocity.linvel.magnitude() < PLAYER_MAX_SPEED {
+                let local_z = subject_transform.local_z();
+                let forward = -Vec3::new(local_z.x, 0., local_z.z);
+                let right = Vec3::new(local_z.z, 0., -local_z.x);
+                let left_right_magnitude = match movement.left_right() {
+                    MovementDirection::Left(magnitude) => {
+                        -magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                    }
+                    MovementDirection::Right(magnitude) => {
+                        magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                    }
+                    _ => {
+                        panic!("Movement left_right() was neither Left nor Right!")
+                    }
+                };
+                let forward_back_magnitude = match movement.forward_back() {
+                    MovementDirection::Forward(magnitude) => {
+                        magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                    }
+                    MovementDirection::Back(magnitude) => {
+                        -magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                    }
+                    _ => {
+                        panic!("Movement forward_back() was neither Forward nor Back!")
+                    }
+                };
+                body_force.force =
+                    (forward * forward_back_magnitude + right * left_right_magnitude).into();
+            }
         }
         Err(_) => {
             panic!("Could not find a player while querying during moving the player body!");

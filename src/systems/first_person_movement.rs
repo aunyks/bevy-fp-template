@@ -38,7 +38,6 @@ pub fn first_person_movement(
     // Process gamepad input because they have precedence
     // over keyboard input
     for gamepad in gamepads.iter().cloned() {
-        debug!("gamepad");
         match axes.get(GamepadAxis(gamepad, GamepadAxisType::LeftStickX)) {
             Some(magnitude) => {
                 if magnitude != 0f32 {
