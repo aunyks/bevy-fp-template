@@ -1,6 +1,8 @@
-/// The global player-editable game configuration.
+use serde::Serialize;
+
+// The global player-editable game configuration.
 /// These settings can be edited at runtime
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Serialize, Debug, PartialEq, Eq)]
 pub struct GameSettings {
     horizontal_sensitivity: u8,
     vertical_sensitivity: u8,
@@ -9,7 +11,7 @@ pub struct GameSettings {
 impl Default for GameSettings {
     fn default() -> Self {
         GameSettings {
-            horizontal_sensitivity: 9,
+            horizontal_sensitivity: 5,
             vertical_sensitivity: 5,
         }
     }
@@ -34,6 +36,14 @@ impl GameSettings {
     #[allow(dead_code)]
     pub fn set_vertical_sensitivity(&mut self, sensitivity: u8) {
         self.vertical_sensitivity = sensitivity;
+    }
+
+    #[allow(dead_code)]
+    pub fn try_to_toml(&self) -> Result<String, String> {
+        match toml::to_string(&self) {
+            Ok(settings_string) => Ok(settings_string),
+            Err(serialization_err) => Err(serialization_err.to_string()),
+        }
     }
 }
 
@@ -65,5 +75,14 @@ mod tests {
         assert_eq!(settings.vertical_sensitivity(), 7);
         settings.set_vertical_sensitivity(2);
         assert_eq!(settings.vertical_sensitivity(), 2);
+    }
+
+    #[test]
+    fn try_to_toml() {
+        let settings = GameSettings::default();
+        assert_eq!(
+            settings.try_to_toml().unwrap(),
+            "horizontal_sensitivity = 5\nvertical_sensitivity = 5\n"
+        );
     }
 }
