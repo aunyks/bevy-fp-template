@@ -4,7 +4,7 @@ use serde::Deserialize;
 /// The global runtime configuration of the game. This value
 /// is loaded at runtime instead of build time and cannot be edited
 /// by the player
-#[derive(Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct GameConfig<'a> {
     window_title: String,
     log_level: &'a str,
