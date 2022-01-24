@@ -127,7 +127,7 @@ fn setup_level(
             .into(),
             material: ColliderMaterial {
                 restitution: 0.9,
-                friction: 1f32,
+                friction: 2f32,
                 friction_combine_rule: CoefficientCombineRule::Max,
                 ..Default::default()
             }
