@@ -2,6 +2,7 @@ use crate::components::{
     FirstPersonHead, FirstPersonSubject, LevelObject, Lookaround, LookaroundDirection, Movement,
     MovementDirection,
 };
+use crate::resources::GameSettings;
 use crate::states::{FirstPersonControlSettings, GameLevel};
 use crate::systems::{activate_physics, deactivate_physics, teardown_game_level};
 use bevy::prelude::*;
@@ -185,6 +186,7 @@ fn setup_level(
 fn rotate_player_head(
     body_query: Query<&Lookaround, With<FirstPersonSubject>>,
     mut head_query: Query<&mut Transform, (With<FirstPersonHead>, Without<FirstPersonSubject>)>,
+    settings: Res<GameSettings>,
 ) {
     let lookaround = match body_query.get_single() {
         Ok(lookaround) => lookaround,
@@ -198,7 +200,7 @@ fn rotate_player_head(
                 LookaroundDirection::Up(magnitude) => {
                     let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
                     let new_quat = Quat::from_rotation_x(
-                        (angle + magnitude * 0.005)
+                        (angle + magnitude * 0.005 * (settings.vertical_sensitivity() / 5) as f32)
                             .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
                     );
                     head_transform.rotation = new_quat;
@@ -206,7 +208,7 @@ fn rotate_player_head(
                 LookaroundDirection::Down(magnitude) => {
                     let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
                     let new_quat = Quat::from_rotation_x(
-                        (angle - magnitude * 0.005)
+                        (angle - magnitude * 0.005 * (settings.vertical_sensitivity() / 5) as f32)
                             .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
                     );
                     head_transform.rotation = new_quat;
@@ -224,18 +226,27 @@ fn rotate_player_head(
 
 fn rotate_player_body(
     mut query: Query<(&Lookaround, &mut RigidBodyPositionComponent), With<FirstPersonSubject>>,
+    settings: Res<GameSettings>,
 ) {
     match query.get_single_mut() {
         Ok((lookaround, mut body)) => {
             let mut rotation = body.position.rotation;
             match lookaround.left_right() {
                 LookaroundDirection::Left(magnitude) => {
-                    rotation =
-                        rotation.append_axisangle_linearized(&(Vector3::y() * magnitude * 0.001));
+                    rotation = rotation.append_axisangle_linearized(
+                        &(Vector3::y()
+                            * magnitude
+                            * 0.001
+                            * (settings.horizontal_sensitivity() / 5) as f32),
+                    );
                 }
                 LookaroundDirection::Right(magnitude) => {
-                    rotation =
-                        rotation.append_axisangle_linearized(&(Vector3::y() * -magnitude * 0.001));
+                    rotation = rotation.append_axisangle_linearized(
+                        &(Vector3::y()
+                            * -magnitude
+                            * 0.001
+                            * (settings.horizontal_sensitivity() / 5) as f32),
+                    );
                 }
                 _ => {
                     panic!("Lookaround left_right() was neither Left nor Right!")
