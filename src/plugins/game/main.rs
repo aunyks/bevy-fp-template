@@ -242,7 +242,7 @@ fn rotate_player_body(
                     rotation = rotation.append_axisangle_linearized(
                         &(Vector3::y()
                             * magnitude
-                            * 0.001
+                            * 0.002
                             * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
                     );
                 }
@@ -250,7 +250,7 @@ fn rotate_player_body(
                     rotation = rotation.append_axisangle_linearized(
                         &(Vector3::y()
                             * -magnitude
-                            * 0.001
+                            * 0.002
                             * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
                     );
                 }
