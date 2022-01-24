@@ -22,16 +22,16 @@ fn main() {
         // Configure log plugin (added by DefaultPlugins)
         .insert_resource(LogSettings {
             level: game_config.log_level(),
-            filter: game_config.log_filter(),
+            filter: game_config.log_filter().clone(),
         })
         .insert_resource(WindowDescriptor {
-            title: game_config.window_title(),
+            title: game_config.window_title().clone(),
             width: 800.,
             height: 700.,
             ..Default::default()
         })
         .add_plugins(DefaultPlugins)
-        .insert_resource(game_config.clone())
+        .insert_resource(game_config)
         .insert_resource(GameSettings::default())
         // Enable First Person controls
         .add_state(FirstPersonControlSettings::Disabled)
