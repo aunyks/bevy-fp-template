@@ -1,4 +1,5 @@
 use bevy::ecs::component::Component;
+use std::fmt;
 
 const LOOKAROUND_DIRECTION_MARGIN: f32 = 0.01f32;
 
@@ -47,6 +48,17 @@ impl Default for Lookaround {
             left_right: LookaroundDirection::Right(0f32),
             up_down: LookaroundDirection::Up(0f32),
         }
+    }
+}
+
+impl fmt::Display for Lookaround {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Lookaround: {:?}, {:?}",
+            self.left_right(),
+            self.up_down()
+        )
     }
 }
 

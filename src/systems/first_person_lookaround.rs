@@ -69,9 +69,6 @@ pub fn first_person_lookaround(
         }
     }
 
-    debug!("LookaroundDirection::{:?}", left_right);
-    debug!("LookaroundDirection::{:?}", up_down);
-
     match query.get_single_mut() {
         Ok(mut lookaround) => {
             lookaround.set_left_right(left_right);

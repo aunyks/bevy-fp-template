@@ -63,10 +63,6 @@ pub fn first_person_movement(
             None => {}
         }
     }
-    // Log left-right direction
-    debug!("MovementDirection::{:?}", &left_right);
-    // Log forward-back direction
-    debug!("MovementDirection::{:?}", &forward_back);
 
     match query.get_single_mut() {
         Ok(mut movement) => {

@@ -1,4 +1,5 @@
 use bevy::ecs::component::Component;
+use std::fmt;
 
 const MOVEMENT_DIRECTION_MARGIN: f32 = 0.01f32;
 
@@ -49,6 +50,17 @@ impl Default for Movement {
             left_right: MovementDirection::Right(0f32),
             forward_back: MovementDirection::Forward(0f32),
         }
+    }
+}
+
+impl fmt::Display for Movement {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "Movement: {:?}, {:?}",
+            self.left_right(),
+            self.forward_back()
+        )
     }
 }
 
