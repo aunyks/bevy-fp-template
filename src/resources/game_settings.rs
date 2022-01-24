@@ -9,7 +9,7 @@ pub struct GameSettings {
 impl Default for GameSettings {
     fn default() -> Self {
         GameSettings {
-            horizontal_sensitivity: 5,
+            horizontal_sensitivity: 9,
             vertical_sensitivity: 5,
         }
     }

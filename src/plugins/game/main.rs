@@ -200,7 +200,10 @@ fn rotate_player_head(
                 LookaroundDirection::Up(magnitude) => {
                     let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
                     let new_quat = Quat::from_rotation_x(
-                        (angle + magnitude * 0.005 * (settings.vertical_sensitivity() / 5) as f32)
+                        (angle
+                            + magnitude
+                                * 0.005
+                                * (settings.vertical_sensitivity() as f32 / 5 as f32))
                             .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
                     );
                     head_transform.rotation = new_quat;
@@ -208,7 +211,10 @@ fn rotate_player_head(
                 LookaroundDirection::Down(magnitude) => {
                     let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
                     let new_quat = Quat::from_rotation_x(
-                        (angle - magnitude * 0.005 * (settings.vertical_sensitivity() / 5) as f32)
+                        (angle
+                            - magnitude
+                                * 0.005
+                                * (settings.vertical_sensitivity() as f32 / 5 as f32))
                             .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
                     );
                     head_transform.rotation = new_quat;
@@ -237,7 +243,7 @@ fn rotate_player_body(
                         &(Vector3::y()
                             * magnitude
                             * 0.001
-                            * (settings.horizontal_sensitivity() / 5) as f32),
+                            * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
                     );
                 }
                 LookaroundDirection::Right(magnitude) => {
@@ -245,7 +251,7 @@ fn rotate_player_body(
                         &(Vector3::y()
                             * -magnitude
                             * 0.001
-                            * (settings.horizontal_sensitivity() / 5) as f32),
+                            * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
                     );
                 }
                 _ => {
