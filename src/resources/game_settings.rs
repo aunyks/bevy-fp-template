@@ -45,6 +45,11 @@ impl GameSettings {
             Err(serialization_err) => Err(serialization_err.to_string()),
         }
     }
+
+    #[allow(dead_code)]
+    pub fn to_toml(&self) -> String {
+        self.try_to_toml().unwrap()
+    }
 }
 
 #[cfg(test)]
@@ -82,6 +87,15 @@ mod tests {
         let settings = GameSettings::default();
         assert_eq!(
             settings.try_to_toml().unwrap(),
+            "horizontal_sensitivity = 5\nvertical_sensitivity = 5\n"
+        );
+    }
+
+    #[test]
+    fn to_toml() {
+        let settings = GameSettings::default();
+        assert_eq!(
+            settings.to_toml(),
             "horizontal_sensitivity = 5\nvertical_sensitivity = 5\n"
         );
     }
