@@ -16,7 +16,7 @@ impl<'a> Default for GameConfig<'a> {
         GameConfig {
             window_title: String::from("bevy-fp-template"),
             log_level: "error",
-            log_filter: String::from("none=warn"),
+            log_filter: String::from("bevy_fp_template::plugins::game::main=trace"),
         }
     }
 }

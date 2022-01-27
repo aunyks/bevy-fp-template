@@ -18,6 +18,9 @@ pub struct FirstPersonSubject;
 #[derive(Component)]
 pub struct FirstPersonHead;
 
+#[derive(Component)]
+pub struct GroundedSensor;
+
 /// This component is used to define an entity that exists in one level at a time. It should
 /// be set up and torn down with every level transition.
 #[derive(Component)]
