@@ -112,8 +112,10 @@ fn setup_level(
         .insert(LevelObject);
 
     // Add a player
-    let player_halfheight_raw = 3f32;
-    let player_radius_raw = 1f32;
+    let player_capsule_total_height = 8f32;
+    let player_capsule_radius = 1f32;
+    let player_halfheight_raw =
+        (player_capsule_total_height - (2f32 * player_capsule_radius)) / 2f32;
     let player_halfheight_physics = Point3::from(Vector3::y() * player_halfheight_raw);
     commands
         .spawn()
@@ -128,7 +130,7 @@ fn setup_level(
             shape: ColliderShape::capsule(
                 -player_halfheight_physics,
                 player_halfheight_physics,
-                player_radius_raw,
+                player_capsule_radius,
             )
             .into(),
             material: ColliderMaterial {
@@ -149,8 +151,8 @@ fn setup_level(
         })
         .insert_bundle(PbrBundle {
             mesh: meshes.add(Mesh::from(bevy::prelude::shape::Capsule {
-                radius: player_radius_raw,
-                depth: player_halfheight_raw + player_radius_raw * 2f32,
+                radius: player_capsule_radius,
+                depth: 2f32 * player_halfheight_raw,
                 rings: 3,
                 latitudes: 4,
                 longitudes: 6,
@@ -332,7 +334,7 @@ fn jump_player_body(
         Ok((player_transform, mut body_forces)) => {
             let collider_set = QueryPipelineColliderComponentsSet(&collider_query);
             let mut player_global_position = player_transform.translation;
-            player_global_position.y -= 4.1;
+            player_global_position.y -= 4.01;
             let ray = Ray::new(
                 player_global_position.into(),
                 Vec3::new(0.0, -1.0, 0.0).into(),
