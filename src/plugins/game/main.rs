@@ -1,13 +1,10 @@
 use crate::components::{
-    FirstPersonHead, FirstPersonSubject, GroundedSensor, LevelObject, Lookaround,
-    LookaroundDirection, Movement, MovementDirection,
+    FirstPersonHead, FirstPersonSubject, LevelObject, Lookaround, LookaroundDirection, Movement,
+    MovementDirection,
 };
 use crate::resources::GameSettings;
 use crate::states::{FirstPersonControlSettings, GameLevel};
 use crate::systems::{activate_physics, deactivate_physics, teardown_game_level};
-use bevy::ecs::archetype::Archetypes;
-use bevy::ecs::component::ComponentId;
-use bevy::ecs::component::Components;
 use bevy::prelude::*;
 use bevy_rapier3d::na::{vector, Point3, Vector3};
 use bevy_rapier3d::prelude::*;
@@ -39,7 +36,6 @@ impl Plugin for MainGameLevel {
                 .with_system(rotate_player_body)
                 .with_system(rotate_player_head)
                 .with_system(move_player_body)
-                .with_system(update_ground_sensor_position)
                 .with_system(jump_player_body),
         )
         .add_system_set(
@@ -179,38 +175,6 @@ fn setup_level(
                 .insert_bundle(PerspectiveCameraBundle {
                     transform: Transform::from_xyz(0f32, -player_halfheight_raw, 5f32)
                         .looking_at(Vec3::new(0f32, 0f32, -1f32), Vec3::Y),
-                    ..Default::default()
-                });
-
-            player_body
-                .spawn()
-                .insert(GroundedSensor)
-                .insert(LevelObject)
-                .insert(Transform::default())
-                .insert(ColliderPositionSync::Discrete)
-                .insert_bundle(ColliderBundle {
-                    shape: ColliderShape::cuboid(
-                        player_radius_raw * 2f32,
-                        1f32,
-                        player_radius_raw * 2f32,
-                    )
-                    .into(),
-                    position: Vec3::new(
-                        0f32,
-                        -player_halfheight_raw - player_radius_raw - 0.02,
-                        0f32,
-                    )
-                    .into(),
-                    flags: ActiveEvents::INTERSECTION_EVENTS.into(),
-                    collider_type: ColliderType::Sensor.into(),
-                    ..Default::default()
-                })
-                .insert_bundle(PbrBundle {
-                    mesh: meshes.add(Mesh::from(bevy::prelude::shape::Cube { size: 1f32 })),
-                    material: materials.add(StandardMaterial {
-                        base_color: Color::GOLD,
-                        ..Default::default()
-                    }),
                     ..Default::default()
                 });
         });
@@ -353,71 +317,35 @@ fn move_player_body(
     }
 }
 
-fn update_ground_sensor_position(
-    mut grounded_sensor_query: Query<&ColliderPositionComponent, With<GroundedSensor>>,
-) {
-    match grounded_sensor_query.get_single_mut() {
-        Ok(collider_position) => {
-            debug!("{:?}", collider_position.0);
-        }
-        _ => {
-            panic!("Could not find a GroundedSensor with ColliderPositionComponent and Transform while updating its collider position!");
-        }
-    }
-}
-
 fn jump_player_body(
-    mut player_query: Query<&mut RigidBodyForcesComponent, With<FirstPersonSubject>>,
-    grounded_sensor_query: Query<
-        (&ColliderShapeComponent, &ColliderPositionComponent),
-        With<GroundedSensor>,
-    >,
     rapier_query_pipeline: Res<QueryPipeline>,
     collider_query: QueryPipelineColliderComponentsQuery,
+    mut player_query: Query<
+        (&GlobalTransform, &mut RigidBodyForcesComponent),
+        With<FirstPersonSubject>,
+    >,
     keyboard_input: Res<Input<KeyCode>>,
     gamepads: Res<Gamepads>,
     gamepad_buttons: Res<Input<GamepadButton>>,
-    archetypes: &Archetypes,
-    components: &Components,
 ) {
-    let is_grounded = match grounded_sensor_query.get_single() {
-        Ok((grounded_sensor_shape, grounded_sensor_position)) => {
+    match player_query.get_single_mut() {
+        Ok((player_transform, mut body_forces)) => {
             let collider_set = QueryPipelineColliderComponentsSet(&collider_query);
+            let mut player_global_position = player_transform.translation;
+            player_global_position.y -= 4.1;
+            let ray = Ray::new(
+                player_global_position.into(),
+                Vec3::new(0.0, -1.0, 0.0).into(),
+            );
+            debug!("{:?}", player_global_position);
+            let max_toi = 0.02;
+            let solid = true;
             let groups = InteractionGroups::all();
             let filter = None;
-            let mut resulting_value = false;
-            rapier_query_pipeline.intersections_with_shape(
-                &collider_set,
-                &grounded_sensor_position,
-                match grounded_sensor_shape.as_cuboid() {
-                    Some(cuboid) => cuboid,
-                    _ => {
-                        panic!("Player GroundedSensor shape couldn't be retrieved as a cuboid! Was it created as such?")
-                    }
-                },
-                groups,
-                filter,
-                |handle| {
-                    for comp_id in get_components_for_entity(&handle.entity(), archetypes).unwrap() {
-                        if let Some(comp_info) = components.get_info(comp_id) {
-                          debug!("Component: {:?}", comp_info);
-                        }
-                      }
-                    // There's an intersection
-                    resulting_value = true;
-                    false
-                },
-            );
-            resulting_value
-        }
-        _ => {
-            panic!("Could not find a GroundedSensor with ColliderShapeComponent and ColliderPositionComponent while making player body jump!");
-        }
-    };
 
-    if is_grounded {
-        match player_query.get_single_mut() {
-            Ok(mut body_forces) => {
+            if let Some(_) =
+                rapier_query_pipeline.cast_ray(&collider_set, &ray, max_toi, solid, groups, filter)
+            {
                 let mut jump_vector = vector![0f32, 0f32, 0f32];
                 if keyboard_input.just_pressed(KeyCode::Space) {
                     jump_vector.y = PLAYER_JUMP_FORCE;
@@ -431,25 +359,11 @@ fn jump_player_body(
                 }
                 body_forces.force = (body_forces.force as Vector3<f32>) + jump_vector;
             }
-            _ => {
-                panic!(
-                    "Could not find a player while querying during making the player body jump!"
-                );
-            }
+        }
+        _ => {
+            panic!("Could not find a player while querying during making the player body jump!");
         }
     }
-}
-
-fn get_components_for_entity<'a>(
-    entity: &Entity,
-    archetypes: &'a Archetypes,
-) -> Option<impl Iterator<Item = ComponentId> + 'a> {
-    for archetype in archetypes.iter() {
-        if archetype.entities().contains(entity) {
-            return Some(archetype.components());
-        }
-    }
-    None
 }
 
 fn teardown_main_game_level(mut commands: Commands) {
