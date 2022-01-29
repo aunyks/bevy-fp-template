@@ -216,11 +216,8 @@ fn setup_level(
         });
 
     // Enable first person controls
-    match fp_control_settings.set(FirstPersonControlSettings::Enabled) {
-        Err(_) => {
-            panic!("Could not enable First Person Controls while setting up main game level!");
-        }
-        _ => {}
+    if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Enabled) {
+        panic!("Could not enable First Person Controls while setting up main game level!");
     };
 }
 
