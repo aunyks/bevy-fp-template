@@ -1,30 +1,53 @@
 use bevy::utils::tracing::Level as LogLevel;
 use serde::Deserialize;
 
-/// The global runtime configuration of the game. This value
-/// is loaded at runtime instead of build time and cannot be edited
-/// by the player
 #[derive(Debug, Deserialize, Clone)]
-pub struct GameConfig<'a> {
-    window_title: String,
-    log_level: &'a str,
-    log_filter: String,
+pub struct PlayerConfig {
+    /// The height of the physics capsule for the player
+    capsule_height: f32,
 }
 
-impl<'a> Default for GameConfig<'a> {
+impl Default for PlayerConfig {
     fn default() -> Self {
-        GameConfig {
-            window_title: String::from("bevy-fp-template"),
-            log_level: "error",
-            log_filter: String::from("bevy_fp_template::plugins::game::main=trace"),
+        PlayerConfig {
+            capsule_height: 8f32,
         }
     }
 }
 
-impl<'a> GameConfig<'a> {
+impl PlayerConfig {
     #[allow(dead_code)]
-    pub fn try_from_toml(toml_str: &'a str) -> Result<Self, String> {
-        match toml::from_str::<GameConfig>(toml_str) {
+    pub fn capsule_height(&self) -> f32 {
+        self.capsule_height
+    }
+}
+
+/// The global runtime configuration of the game. This value
+/// is loaded at runtime instead of build time and cannot be edited
+/// by the player
+#[derive(Debug, Deserialize, Clone)]
+pub struct GameConfig {
+    window_title: String,
+    log_level: String,
+    log_filter: String,
+    pub player: PlayerConfig,
+}
+
+impl Default for GameConfig {
+    fn default() -> Self {
+        GameConfig {
+            window_title: String::from("bevy-fp-template"),
+            log_level: String::from("error"),
+            log_filter: String::from("none=warn"),
+            player: PlayerConfig::default(),
+        }
+    }
+}
+
+impl GameConfig {
+    #[allow(dead_code)]
+    pub fn try_from_toml(toml_str: String) -> Result<Self, String> {
+        match toml::from_str::<GameConfig>(toml_str.as_str()) {
             Ok(config) => Ok(config),
             Err(toml_de_err) => Err(toml_de_err.to_string()),
         }
@@ -37,12 +60,12 @@ impl<'a> GameConfig<'a> {
     // This shouldn't be used much, if at all.
     // It's here for convenience
     #[allow(dead_code)]
-    pub fn log_level_raw(&self) -> &str {
-        self.log_level
+    pub fn log_level_raw(&self) -> &String {
+        &self.log_level
     }
 
     pub fn log_level(&self) -> LogLevel {
-        match self.log_level {
+        match self.log_level.as_str() {
             "trace" => LogLevel::TRACE,
             "debug" => LogLevel::DEBUG,
             "info" => LogLevel::INFO,
@@ -79,28 +102,31 @@ mod tests {
     #[test]
     fn try_from_toml() {
         // Test normal conditions
-        let good_config = GameConfig::try_from_toml(
+        let good_config = GameConfig::try_from_toml(String::from(
             "
-        window_title=\"some title\" \n
-        log_level=\"trace\" \n
-        log_filter=\"some=trace\" \n
+        window_title=\"some title\"
+        log_level=\"trace\"
+        log_filter=\"some=trace\"
+        [player]
+        capsule_height = 8
         ",
-        )
+        ))
         .unwrap();
         assert_eq!(good_config.window_title(), &String::from("some title"));
         assert_eq!(good_config.log_level(), LogLevel::TRACE);
         assert_eq!(good_config.log_level_raw(), "trace");
         assert_eq!(good_config.log_filter(), "some=trace");
+        assert_eq!(good_config.player.capsule_height(), 8f32);
 
         // Test bad configs
 
         // Missing config property
-        match GameConfig::try_from_toml(
+        match GameConfig::try_from_toml(String::from(
             "
         window_title=\"some title\" \n
         log_level=\"trace\" \n
         ",
-        ) {
+        )) {
             Err(err_string) => {
                 assert_eq!(
                     err_string,
@@ -113,13 +139,13 @@ mod tests {
         };
 
         // Missing trailing quote at the end
-        match GameConfig::try_from_toml(
+        match GameConfig::try_from_toml(String::from(
             "
         window_title=\"some title\" \n
         log_level=\"trace\" \n
         log_filter=\"some=trace \n
         ",
-        ) {
+        )) {
             Err(err_string) => {
                 assert_eq!(
                     err_string,

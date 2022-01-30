@@ -2,7 +2,7 @@ use crate::components::{
     FirstPersonHead, FirstPersonSubject, LevelObject, Lookaround, LookaroundDirection, Movement,
     MovementDirection,
 };
-use crate::resources::GameSettings;
+use crate::resources::{GameConfig, GameSettings};
 use crate::states::{FirstPersonControlSettings, GameLevel};
 use crate::systems::{activate_physics, deactivate_physics, teardown_game_level};
 use bevy::prelude::*;
@@ -53,7 +53,9 @@ fn setup_level(
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut fp_control_settings: ResMut<State<FirstPersonControlSettings>>,
+    game_config: Res<GameConfig>,
 ) {
+    let player_config = game_config.player.clone();
     /* Create the ground. */
     let collider = ColliderBundle {
         shape: ColliderShape::cuboid(100.0, 0.1, 100.0).into(),
@@ -112,7 +114,7 @@ fn setup_level(
         .insert(LevelObject);
 
     // Add a player
-    let player_capsule_total_height = 8f32;
+    let player_capsule_total_height = player_config.capsule_height();
     let player_capsule_radius = 1f32;
     let player_halfheight_raw =
         (player_capsule_total_height - (2f32 * player_capsule_radius)) / 2f32;
