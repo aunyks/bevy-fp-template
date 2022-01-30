@@ -23,8 +23,10 @@ impl Plugin for MainGameLevel {
             SystemSet::on_update(GameLevel::Main)
                 .with_system(rotate_player_body)
                 .with_system(rotate_player_head)
-                .with_system(move_player_body)
-                .with_system(jump_player_body),
+                // Make sure jump system runs after movement to prevent
+                // the bug where the player can't jump without moving at the same time
+                .with_system(move_player_body.label("move-player-body"))
+                .with_system(jump_player_body.after("move-player-body")),
         )
         .add_system_set(
             SystemSet::on_exit(GameLevel::Main)
