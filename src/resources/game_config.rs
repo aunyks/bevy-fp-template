@@ -5,20 +5,50 @@ use serde::Deserialize;
 pub struct PlayerConfig {
     /// The height of the physics capsule for the player
     capsule_height: f32,
+    /// The radius of the physics capsule for the player
+    capsule_radius: f32,
+    /// The force applied to the FirstPersonSubject during movement.
+    /// Unsure of units but likely in Newtons
+    movement_force: f32,
+    /// The vertical force applied to the FirstPersonSubject
+    /// to cause it to jump
+    jump_force: f32,
+    /// The max speed of the FirstPersonSubject.
+    /// Unsure of units but likely in meters per second
+    max_speed: f32,
 }
 
 impl Default for PlayerConfig {
     fn default() -> Self {
         PlayerConfig {
             capsule_height: 8f32,
+            capsule_radius: 1f32,
+            movement_force: 1000f32,
+            jump_force: 10000f32,
+            max_speed: 5f32,
         }
     }
 }
 
 impl PlayerConfig {
-    #[allow(dead_code)]
     pub fn capsule_height(&self) -> f32 {
         self.capsule_height
+    }
+
+    pub fn capsule_radius(&self) -> f32 {
+        self.capsule_radius
+    }
+
+    pub fn movement_force(&self) -> f32 {
+        self.movement_force
+    }
+
+    pub fn jump_force(&self) -> f32 {
+        self.jump_force
+    }
+
+    pub fn max_speed(&self) -> f32 {
+        self.max_speed
     }
 }
 
@@ -109,6 +139,10 @@ mod tests {
         log_filter=\"some=trace\"
         [player]
         capsule_height = 8
+        capsule_radius = 1
+        movement_force = 1000
+        jump_force = 10000
+        max_speed = 5
         ",
         ))
         .unwrap();
@@ -117,6 +151,10 @@ mod tests {
         assert_eq!(good_config.log_level_raw(), "trace");
         assert_eq!(good_config.log_filter(), "some=trace");
         assert_eq!(good_config.player.capsule_height(), 8f32);
+        assert_eq!(good_config.player.capsule_radius(), 1f32);
+        assert_eq!(good_config.player.movement_force(), 1000f32);
+        assert_eq!(good_config.player.jump_force(), 10000f32);
+        assert_eq!(good_config.player.max_speed(), 5f32);
 
         // Test bad configs
 

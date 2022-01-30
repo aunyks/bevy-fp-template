@@ -9,18 +9,6 @@ use bevy::prelude::*;
 use bevy_rapier3d::na::{vector, Point3, Vector3};
 use bevy_rapier3d::prelude::*;
 
-/// The force applied to the FirstPersonSubject during movement.
-/// Unsure of units but likely in Newtons
-const PLAYER_MOVEMENT_FORCE_MULTIPLIER: f32 = 1000f32;
-
-/// The vertical force applied to the FirstPersonSubject
-/// to cause it to jump
-const PLAYER_JUMP_FORCE: f32 = 10000f32;
-
-/// The max speed of the FirstPersonSubject.
-/// Unsure of units but likely in meters per second
-const PLAYER_MAX_SPEED: f32 = 5f32;
-
 /// This plugin manages gameplay for the main game level
 pub struct MainGameLevel;
 
@@ -64,22 +52,20 @@ fn setup_level(
     commands.spawn_bundle(collider).insert(LevelObject);
 
     /* Create the bouncing ball. */
-    let rigid_body = RigidBodyBundle {
-        position: Vec3::new(0.0, 10.0, 0.0).into(),
-        ..Default::default()
-    };
-    let collider = ColliderBundle {
-        shape: ColliderShape::ball(0.5).into(),
-        material: ColliderMaterial {
-            restitution: 0.7,
-            ..Default::default()
-        }
-        .into(),
-        ..Default::default()
-    };
     commands
-        .spawn_bundle(rigid_body)
-        .insert_bundle(collider)
+        .spawn_bundle(RigidBodyBundle {
+            position: Vec3::new(0.0, 10.0, 0.0).into(),
+            ..Default::default()
+        })
+        .insert_bundle(ColliderBundle {
+            shape: ColliderShape::ball(0.5).into(),
+            material: ColliderMaterial {
+                restitution: 0.7,
+                ..Default::default()
+            }
+            .into(),
+            ..Default::default()
+        })
         .insert(LevelObject)
         .insert(Transform::default())
         .insert(RigidBodyPositionSync::Discrete)
@@ -115,7 +101,7 @@ fn setup_level(
 
     // Add a player
     let player_capsule_total_height = player_config.capsule_height();
-    let player_capsule_radius = 1f32;
+    let player_capsule_radius = player_config.capsule_radius();
     let player_halfheight_raw =
         (player_capsule_total_height - (2f32 * player_capsule_radius)) / 2f32;
     let player_halfheight_physics = Point3::from(Vector3::y() * player_halfheight_raw);
@@ -282,19 +268,21 @@ fn move_player_body(
         ),
         With<FirstPersonSubject>,
     >,
+    game_config: Res<GameConfig>,
 ) {
+    let player_config = game_config.player.clone();
     match query.get_single_mut() {
         Ok((movement, subject_transform, mut body_force, body_velocity)) => {
-            if body_velocity.linvel.magnitude() < PLAYER_MAX_SPEED {
+            if body_velocity.linvel.magnitude() < player_config.max_speed() {
                 let local_z = subject_transform.local_z();
                 let forward = -Vec3::new(local_z.x, 0., local_z.z);
                 let right = Vec3::new(local_z.z, 0., -local_z.x);
                 let left_right_magnitude = match movement.left_right() {
                     MovementDirection::Left(magnitude) => {
-                        -magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                        -magnitude * player_config.movement_force()
                     }
                     MovementDirection::Right(magnitude) => {
-                        magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                        magnitude * player_config.movement_force()
                     }
                     _ => {
                         panic!("Movement left_right() was neither Left nor Right!")
@@ -302,10 +290,10 @@ fn move_player_body(
                 };
                 let forward_back_magnitude = match movement.forward_back() {
                     MovementDirection::Forward(magnitude) => {
-                        magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                        magnitude * player_config.movement_force()
                     }
                     MovementDirection::Back(magnitude) => {
-                        -magnitude * PLAYER_MOVEMENT_FORCE_MULTIPLIER
+                        -magnitude * player_config.movement_force()
                     }
                     _ => {
                         panic!("Movement forward_back() was neither Forward nor Back!")
@@ -331,17 +319,18 @@ fn jump_player_body(
     keyboard_input: Res<Input<KeyCode>>,
     gamepads: Res<Gamepads>,
     gamepad_buttons: Res<Input<GamepadButton>>,
+    game_config: Res<GameConfig>,
 ) {
+    let player_config = game_config.player.clone();
     match player_query.get_single_mut() {
         Ok((player_transform, mut body_forces)) => {
             let collider_set = QueryPipelineColliderComponentsSet(&collider_query);
             let mut player_global_position = player_transform.translation;
-            player_global_position.y -= 4.01;
+            player_global_position.y -= (player_config.capsule_height() / 2f32) + 0.01;
             let ray = Ray::new(
                 player_global_position.into(),
                 Vec3::new(0.0, -1.0, 0.0).into(),
             );
-            debug!("{:?}", player_global_position);
             let max_toi = 0.02;
             let solid = true;
             let groups = InteractionGroups::all();
@@ -352,13 +341,13 @@ fn jump_player_body(
             {
                 let mut jump_vector = vector![0f32, 0f32, 0f32];
                 if keyboard_input.just_pressed(KeyCode::Space) {
-                    jump_vector.y = PLAYER_JUMP_FORCE;
+                    jump_vector.y = player_config.jump_force();
                 }
                 for gamepad in gamepads.iter().cloned() {
                     if gamepad_buttons
                         .just_pressed(GamepadButton(gamepad, GamepadButtonType::South))
                     {
-                        jump_vector.y = PLAYER_JUMP_FORCE;
+                        jump_vector.y = player_config.jump_force();
                     }
                 }
                 body_forces.force = (body_forces.force as Vector3<f32>) + jump_vector;
