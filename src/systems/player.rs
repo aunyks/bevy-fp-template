@@ -73,14 +73,12 @@ pub fn add_player(
                 .spawn()
                 .insert(FirstPersonHead)
                 .insert(LevelObject)
-                .insert(
-                    Transform::from_rotation(Quat::from_rotation_x(-std::f32::consts::FRAC_PI_4))
-                        .looking_at(Vec3::new(0f32, 0f32, -1f32), Vec3::Y),
-                )
+                .insert(Transform::from_rotation(Quat::from_rotation_x(
+                    -std::f32::consts::FRAC_PI_4,
+                )))
                 .insert_bundle(PerspectiveCameraBundle {
                     // Put the camera at the top of the cylinder / bottom of the topmost hemisphere
-                    transform: Transform::from_xyz(0f32, player_halfheight_raw, 0f32)
-                        .looking_at(Vec3::new(0f32, 0f32, -1f32), Vec3::Y),
+                    transform: Transform::from_xyz(0f32, player_halfheight_raw, 0f32),
                     ..Default::default()
                 });
         });

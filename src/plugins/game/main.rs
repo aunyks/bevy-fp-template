@@ -104,6 +104,13 @@ fn setup_level(
     };
 }
 
-fn teardown_main_game_level(mut commands: Commands) {
+fn teardown_main_game_level(
+    mut commands: Commands,
+    mut fp_control_settings: ResMut<State<FirstPersonControlSettings>>,
+) {
     commands.remove_resource::<AmbientLight>();
+    // Enable first person controls
+    if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Disabled) {
+        panic!("Could not disable First Person Controls while tearing down main game level!");
+    };
 }
