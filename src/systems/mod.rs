@@ -2,6 +2,7 @@ mod activate_physics;
 mod deactivate_physics;
 mod first_person_lookaround;
 mod first_person_movement;
+pub mod player;
 mod teardown_game_level;
 
 pub use self::activate_physics::*;

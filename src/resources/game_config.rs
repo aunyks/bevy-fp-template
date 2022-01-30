@@ -60,7 +60,7 @@ pub struct GameConfig {
     window_title: String,
     log_level: String,
     log_filter: String,
-    pub player: PlayerConfig,
+    player: PlayerConfig,
 }
 
 impl Default for GameConfig {
@@ -110,6 +110,10 @@ impl GameConfig {
     pub fn log_filter(&self) -> &String {
         &self.log_filter
     }
+
+    pub fn player(&self) -> &PlayerConfig {
+        &self.player
+    }
 }
 
 #[cfg(test)]
@@ -150,11 +154,11 @@ mod tests {
         assert_eq!(good_config.log_level(), LogLevel::TRACE);
         assert_eq!(good_config.log_level_raw(), "trace");
         assert_eq!(good_config.log_filter(), "some=trace");
-        assert_eq!(good_config.player.capsule_height(), 8f32);
-        assert_eq!(good_config.player.capsule_radius(), 1f32);
-        assert_eq!(good_config.player.movement_force(), 1000f32);
-        assert_eq!(good_config.player.jump_force(), 10000f32);
-        assert_eq!(good_config.player.max_speed(), 5f32);
+        assert_eq!(good_config.player().capsule_height(), 8f32);
+        assert_eq!(good_config.player().capsule_radius(), 1f32);
+        assert_eq!(good_config.player().movement_force(), 1000f32);
+        assert_eq!(good_config.player().jump_force(), 10000f32);
+        assert_eq!(good_config.player().max_speed(), 5f32);
 
         // Test bad configs
 
