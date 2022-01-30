@@ -12,5 +12,6 @@ pub enum FirstPersonControlSettings {
 /// a main menu, gameplay level, cinematic sequence, and more are all levels
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub enum GameLevel {
+    MainMenu,
     Main,
 }

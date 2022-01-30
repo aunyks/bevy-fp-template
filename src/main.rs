@@ -4,7 +4,7 @@ use bevy::prelude::*;
 use bevy_rapier3d::physics::TimestepMode;
 use bevy_rapier3d::prelude::*;
 
-use plugins::game::MainGameLevel;
+use plugins::levels::{MainGameLevel, MainMenuLevel};
 use plugins::FirstPersonControlPlugin;
 use resources::{GameConfig, GameSettings};
 use states::{FirstPersonControlSettings, GameLevel};
@@ -36,7 +36,7 @@ fn main() {
         // Enable First Person controls
         .add_state(FirstPersonControlSettings::Disabled)
         .add_plugin(FirstPersonControlPlugin)
-        .add_state(GameLevel::Main)
+        .add_state(GameLevel::MainMenu)
         // Configure and add physics
         .insert_resource(RapierConfiguration {
             gravity: Vector::y() * -9.81,
@@ -47,6 +47,7 @@ fn main() {
             timestep_mode: TimestepMode::VariableTimestep,
         })
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::default())
+        .add_plugin(MainMenuLevel)
         .add_plugin(MainGameLevel)
         .run();
 }

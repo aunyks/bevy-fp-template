@@ -57,6 +57,7 @@ impl PlayerConfig {
 /// by the player
 #[derive(Debug, Deserialize, Clone)]
 pub struct GameConfig {
+    name: String,
     window_title: String,
     log_level: String,
     log_filter: String,
@@ -66,6 +67,7 @@ pub struct GameConfig {
 impl Default for GameConfig {
     fn default() -> Self {
         GameConfig {
+            name: String::from("Bevy First Person Template"),
             window_title: String::from("bevy-fp-template"),
             log_level: String::from("error"),
             log_filter: String::from("none=warn"),
@@ -81,6 +83,10 @@ impl GameConfig {
             Ok(config) => Ok(config),
             Err(toml_de_err) => Err(toml_de_err.to_string()),
         }
+    }
+
+    pub fn name(&self) -> &String {
+        &self.name
     }
 
     pub fn window_title(&self) -> &String {
@@ -138,9 +144,10 @@ mod tests {
         // Test normal conditions
         let good_config = GameConfig::try_from_toml(String::from(
             "
-        window_title=\"some title\"
-        log_level=\"trace\"
-        log_filter=\"some=trace\"
+        name = \"some name\"
+        window_title = \"some title\"
+        log_level = \"trace\"
+        log_filter = \"some=trace\"
         [player]
         capsule_height = 8
         capsule_radius = 1
@@ -150,6 +157,7 @@ mod tests {
         ",
         ))
         .unwrap();
+        assert_eq!(good_config.name(), &String::from("some name"));
         assert_eq!(good_config.window_title(), &String::from("some title"));
         assert_eq!(good_config.log_level(), LogLevel::TRACE);
         assert_eq!(good_config.log_level_raw(), "trace");
@@ -172,7 +180,7 @@ mod tests {
             Err(err_string) => {
                 assert_eq!(
                     err_string,
-                    String::from("missing field `log_filter` at line 1 column 1")
+                    String::from("missing field `name` at line 1 column 1")
                 );
             }
             _ => {
