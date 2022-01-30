@@ -165,7 +165,8 @@ fn setup_level(
                         .looking_at(Vec3::new(0f32, 0f32, -1f32), Vec3::Y),
                 )
                 .insert_bundle(PerspectiveCameraBundle {
-                    transform: Transform::from_xyz(0f32, -player_halfheight_raw, 5f32)
+                    // Put the camera at the top of the cylinder / bottom of the topmost hemisphere
+                    transform: Transform::from_xyz(0f32, player_halfheight_raw, 0f32)
                         .looking_at(Vec3::new(0f32, 0f32, -1f32), Vec3::Y),
                     ..Default::default()
                 });
