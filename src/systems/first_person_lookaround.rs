@@ -46,18 +46,18 @@ pub fn first_person_lookaround(
         if let Some(magnitude) = axes.get(GamepadAxis(gamepad, GamepadAxisType::RightStickX)) {
             if magnitude != 0f32 {
                 left_right = if magnitude > 0f32 {
-                    LookaroundDirection::Right(magnitude)
+                    LookaroundDirection::Right(magnitude * 11f32)
                 } else {
-                    LookaroundDirection::Left(magnitude.abs())
+                    LookaroundDirection::Left(magnitude.abs() * 11f32)
                 };
             }
         }
         if let Some(magnitude) = axes.get(GamepadAxis(gamepad, GamepadAxisType::RightStickY)) {
             if magnitude != 0f32 {
                 up_down = if magnitude > 0f32 {
-                    LookaroundDirection::Up(magnitude)
+                    LookaroundDirection::Up(magnitude * 6.5)
                 } else {
-                    LookaroundDirection::Down(magnitude.abs())
+                    LookaroundDirection::Down(magnitude.abs() * 6.5)
                 };
             }
         }
