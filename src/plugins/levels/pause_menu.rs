@@ -1,4 +1,5 @@
 use crate::states::GameLevel;
+use crate::systems::teardown_game_level;
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -6,6 +7,12 @@ struct PauseMenuObject;
 
 #[derive(Component)]
 struct ResumeButton;
+
+#[derive(Component)]
+struct SettingsButton;
+
+#[derive(Component)]
+struct QuitButton;
 
 /// This plugin manages gameplay for the pause menu level
 pub struct PauseMenuLevel;
@@ -16,10 +23,13 @@ impl Plugin for PauseMenuLevel {
             .add_system_set(
                 SystemSet::on_update(GameLevel::PauseMenu)
                     .with_system(change_button_style_on_interaction)
-                    .with_system(enter_game_on_resume_game_clicked),
+                    .with_system(enter_game_on_resume_game_clicked)
+                    .with_system(quit_game_on_quit_game_clicked),
             )
             .add_system_set(
-                SystemSet::on_exit(GameLevel::PauseMenu).with_system(teardown_pause_level),
+                SystemSet::on_exit(GameLevel::PauseMenu)
+                    .with_system(teardown_pause_level)
+                    .with_system(teardown_game_level),
             );
     }
 }
@@ -86,7 +96,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                             ..Default::default()
                         });
 
-                    // Add play game button
+                    // Add resume game button
                     center_third_column
                         .spawn()
                         .insert(PauseMenuObject)
@@ -108,13 +118,93 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                             color: Color::rgb(0.15, 0.15, 0.15).into(),
                             ..Default::default()
                         })
-                        .with_children(|play_game_button| {
-                            play_game_button
+                        .with_children(|resume_game_button| {
+                            resume_game_button
                                 .spawn()
                                 .insert(PauseMenuObject)
                                 .insert_bundle(TextBundle {
                                     text: Text::with_section(
                                         "Resume",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 40.0,
+                                            color: Color::rgb(0.9, 0.9, 0.9),
+                                        },
+                                        Default::default(),
+                                    ),
+                                    ..Default::default()
+                                });
+                        });
+
+                    // Add settings button
+                    center_third_column
+                        .spawn()
+                        .insert(PauseMenuObject)
+                        .insert(SettingsButton)
+                        .insert_bundle(ButtonBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(200.0), Val::Px(65.0)),
+                                margin: Rect {
+                                    top: Val::Px(20.0),
+                                    bottom: Val::Px(20.0),
+                                    ..Default::default()
+                                },
+                                // horizontally center child text
+                                justify_content: JustifyContent::Center,
+                                // vertically center child text
+                                align_items: AlignItems::Center,
+                                ..Default::default()
+                            },
+                            color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..Default::default()
+                        })
+                        .with_children(|settings_button| {
+                            settings_button
+                                .spawn()
+                                .insert(PauseMenuObject)
+                                .insert_bundle(TextBundle {
+                                    text: Text::with_section(
+                                        "Settings",
+                                        TextStyle {
+                                            font: asset_server.load("fonts/FiraSans-Bold.ttf"),
+                                            font_size: 40.0,
+                                            color: Color::rgb(0.9, 0.9, 0.9),
+                                        },
+                                        Default::default(),
+                                    ),
+                                    ..Default::default()
+                                });
+                        });
+
+                    // Add quit button
+                    center_third_column
+                        .spawn()
+                        .insert(PauseMenuObject)
+                        .insert(QuitButton)
+                        .insert_bundle(ButtonBundle {
+                            style: Style {
+                                size: Size::new(Val::Px(200.0), Val::Px(65.0)),
+                                margin: Rect {
+                                    top: Val::Px(20.0),
+                                    bottom: Val::Px(20.0),
+                                    ..Default::default()
+                                },
+                                // horizontally center child text
+                                justify_content: JustifyContent::Center,
+                                // vertically center child text
+                                align_items: AlignItems::Center,
+                                ..Default::default()
+                            },
+                            color: Color::rgb(0.15, 0.15, 0.15).into(),
+                            ..Default::default()
+                        })
+                        .with_children(|settings_button| {
+                            settings_button
+                                .spawn()
+                                .insert(PauseMenuObject)
+                                .insert_bundle(TextBundle {
+                                    text: Text::with_section(
+                                        "Quit Game",
                                         TextStyle {
                                             font: asset_server.load("fonts/FiraSans-Bold.ttf"),
                                             font_size: 40.0,
@@ -158,7 +248,7 @@ fn enter_game_on_resume_game_clicked(
         Ok(interaction) => match *interaction {
             Interaction::Clicked => {
                 if let Err(_) = game_level.pop() {
-                    panic!("Popping GameLevel from the pause menu!");
+                    panic!("Error occurred while popping GameLevel from the pause menu!");
                 }
             }
             _ => {}
@@ -167,6 +257,25 @@ fn enter_game_on_resume_game_clicked(
             panic!(
                 "Could not find a ResumeButton while setting it up to change GameLevel on click!"
             );
+        }
+    }
+}
+
+fn quit_game_on_quit_game_clicked(
+    interaction_query: Query<&Interaction, With<QuitButton>>,
+    mut game_level: ResMut<State<GameLevel>>,
+) {
+    match interaction_query.get_single() {
+        Ok(interaction) => match *interaction {
+            Interaction::Clicked => {
+                if let Err(_) = game_level.set(GameLevel::MainMenu) {
+                    panic!("Error occurred while setting GameLevel to main menu!");
+                }
+            }
+            _ => {}
+        },
+        _ => {
+            panic!("Could not find a QuitButton while setting it up to quit the game on click!");
         }
     }
 }
