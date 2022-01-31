@@ -14,4 +14,5 @@ pub enum FirstPersonControlSettings {
 pub enum GameLevel {
     MainMenu,
     Main,
+    PauseMenu,
 }

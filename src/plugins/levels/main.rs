@@ -18,10 +18,17 @@ impl Plugin for MainGameLevel {
                 .with_system(setup_level)
                 .with_system(add_player),
         )
+        .add_system_set(SystemSet::on_pause(GameLevel::Main).with_system(deactivate_physics))
+        .add_system_set(
+            SystemSet::on_resume(GameLevel::Main)
+                .with_system(activate_physics)
+                .with_system(resume_game),
+        )
         .add_system_set(
             SystemSet::on_update(GameLevel::Main)
                 .with_system(rotate_player_body)
                 .with_system(rotate_player_head)
+                .with_system(pause_game)
                 // Make sure jump system runs after movement to prevent
                 // the bug where the player can't jump without moving at the same time
                 .with_system(move_player_body.label("move-player-body"))
@@ -101,6 +108,39 @@ fn setup_level(
     // Enable first person controls
     if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Enabled) {
         panic!("Could not enable First Person Controls while setting up main game level!");
+    };
+}
+
+fn pause_game(
+    mut keyboard_input: ResMut<Input<KeyCode>>,
+    gamepads: Res<Gamepads>,
+    gamepad_buttons: Res<Input<GamepadButton>>,
+    mut fp_control_settings: ResMut<State<FirstPersonControlSettings>>,
+    mut game_level: ResMut<State<GameLevel>>,
+) {
+    let mut should_pause = false;
+    if keyboard_input.just_pressed(KeyCode::Escape) {
+        should_pause = true;
+        keyboard_input.reset(KeyCode::Escape);
+    }
+    for gamepad in gamepads.iter().cloned() {
+        if gamepad_buttons.just_pressed(GamepadButton(gamepad, GamepadButtonType::Start)) {
+            should_pause = true;
+        }
+    }
+    if should_pause {
+        if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Disabled) {
+            panic!("Could not disable First Person Controls while pausing the game!");
+        };
+        if let Err(_) = game_level.push(GameLevel::PauseMenu) {
+            panic!("Error occurred while trying to pause the game!");
+        }
+    }
+}
+
+fn resume_game(mut fp_control_settings: ResMut<State<FirstPersonControlSettings>>) {
+    if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Enabled) {
+        panic!("Could not enable First Person Controls while resuming the game!");
     };
 }
 
