@@ -22,4 +22,5 @@ toml = { version = "0.5.8" }
 # https://github.com/serde-rs/serde
 serde = { version = "1.0.97", features = ["derive"] }
 
+# https://github.com/dimforge/bevy_rapier (https://github.com/dimforge/rapier3d)
 bevy_rapier3d = { version = "0.12.1", git = "https://github.com/dimforge/bevy_rapier", commit = "11605d04160668502c452f17db26dc6b98e9d26e", tag = "v0.12.1" }

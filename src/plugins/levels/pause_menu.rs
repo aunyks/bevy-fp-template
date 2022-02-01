@@ -69,9 +69,9 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                     color: Color::NONE.into(),
                     ..Default::default()
                 })
-                .with_children(|center_third_column| {
+                .with_children(|center_column| {
                     // Add title text
-                    center_third_column
+                    center_column
                         .spawn()
                         .insert(PauseMenuObject)
                         .insert(ResumeButton)
@@ -97,7 +97,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         });
 
                     // Add resume game button
-                    center_third_column
+                    center_column
                         .spawn()
                         .insert(PauseMenuObject)
                         .insert(ResumeButton)
@@ -137,7 +137,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         });
 
                     // Add settings button
-                    center_third_column
+                    center_column
                         .spawn()
                         .insert(PauseMenuObject)
                         .insert(SettingsButton)
@@ -177,7 +177,7 @@ fn setup_menu(mut commands: Commands, asset_server: Res<AssetServer>) {
                         });
 
                     // Add quit button
-                    center_third_column
+                    center_column
                         .spawn()
                         .insert(PauseMenuObject)
                         .insert(QuitButton)
