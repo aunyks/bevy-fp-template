@@ -63,13 +63,9 @@ pub fn first_person_lookaround(
         }
     }
 
-    match query.get_single_mut() {
-        Ok(mut lookaround) => {
-            lookaround.set_left_right(left_right);
-            lookaround.set_up_down(up_down);
-        }
-        Err(_) => {
-            panic!("Could not find a player when querying using Lookaround component!");
-        }
-    }
+    let mut lookaround = query
+        .get_single_mut()
+        .expect("Could not find a player when querying using Lookaround component!");
+    lookaround.set_left_right(left_right);
+    lookaround.set_up_down(up_down);
 }

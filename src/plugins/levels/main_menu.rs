@@ -157,19 +157,13 @@ fn enter_game_on_play_game_clicked(
     interaction_query: Query<&Interaction, With<PlayGameButton>>,
     mut game_level: ResMut<State<GameLevel>>,
 ) {
-    match interaction_query.get_single() {
-        Ok(interaction) => match *interaction {
-            Interaction::Clicked => {
-                if let Err(_) = game_level.set(GameLevel::Main) {
-                    panic!("Error occurred while setting GameLevel state to Main. Either the current state is Main, or another state transition is already queued!");
-                }
-            }
-            _ => {}
-        },
-        _ => {
-            panic!(
-                "Could not find a PlayGameButton while setting it up to change GameLevel on click!"
-            );
+    let interaction = interaction_query.get_single().expect(
+        "Could not find a PlayGameButton while setting it up to change GameLevel on click!",
+    );
+    match *interaction {
+        Interaction::Clicked => {
+            game_level.set(GameLevel::Main).expect("Error occurred while setting GameLevel state to Main. Either the current state is Main, or another state transition is already queued!");
         }
+        _ => {}
     }
 }

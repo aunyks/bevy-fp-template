@@ -19,17 +19,17 @@ pub fn pause_game(
         }
     }
     if should_pause {
-        if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Disabled) {
-            panic!("Could not disable First Person Controls while pausing the game!");
-        };
-        if let Err(_) = game_level.push(GameLevel::PauseMenu) {
-            panic!("Error occurred while trying to pause the game!");
-        }
+        fp_control_settings
+            .set(FirstPersonControlSettings::Disabled)
+            .expect("Could not disable First Person Controls while pausing the game!");
+        game_level
+            .push(GameLevel::PauseMenu)
+            .expect("Error occurred while trying to pause the game!");
     }
 }
 
 pub fn resume_game(mut fp_control_settings: ResMut<State<FirstPersonControlSettings>>) {
-    if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Enabled) {
-        panic!("Could not enable First Person Controls while resuming the game!");
-    };
+    fp_control_settings
+        .set(FirstPersonControlSettings::Enabled)
+        .expect("Could not enable First Person Controls while resuming the game!");
 }

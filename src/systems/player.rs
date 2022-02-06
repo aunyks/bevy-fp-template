@@ -89,44 +89,27 @@ pub fn rotate_player_head(
     mut head_query: Query<&mut Transform, (With<FirstPersonHead>, Without<FirstPersonSubject>)>,
     settings: Res<GameSettings>,
 ) {
-    let lookaround = match body_query.get_single() {
-        Ok(lookaround) => lookaround,
-        Err(_) => {
-            panic!("Could not find a player with Lookaround component while querying during rotating the player head!");
+    let lookaround = body_query.get_single().expect("Could not find a player with Lookaround component while querying during rotating the player head!");
+    let mut head_transform = head_query.get_single_mut().expect("Could not find a FirstPersonHead with a Transform component while querying for the player's head!");
+    match lookaround.up_down() {
+        LookaroundDirection::Up(magnitude) => {
+            let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
+            let new_quat = Quat::from_rotation_x(
+                (angle + magnitude * 0.005 * (settings.vertical_sensitivity() as f32 / 5 as f32))
+                    .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
+            );
+            head_transform.rotation = new_quat;
         }
-    };
-    match head_query.get_single_mut() {
-        Ok(mut head_transform) => {
-            match lookaround.up_down() {
-                LookaroundDirection::Up(magnitude) => {
-                    let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
-                    let new_quat = Quat::from_rotation_x(
-                        (angle
-                            + magnitude
-                                * 0.005
-                                * (settings.vertical_sensitivity() as f32 / 5 as f32))
-                            .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
-                    );
-                    head_transform.rotation = new_quat;
-                }
-                LookaroundDirection::Down(magnitude) => {
-                    let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
-                    let new_quat = Quat::from_rotation_x(
-                        (angle
-                            - magnitude
-                                * 0.005
-                                * (settings.vertical_sensitivity() as f32 / 5 as f32))
-                            .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
-                    );
-                    head_transform.rotation = new_quat;
-                }
-                _ => {
-                    panic!("Lookaround up_down() was neither Up nor Down!")
-                }
-            };
+        LookaroundDirection::Down(magnitude) => {
+            let (angle, _, _) = head_transform.rotation.to_euler(EulerRot::XYZ);
+            let new_quat = Quat::from_rotation_x(
+                (angle - magnitude * 0.005 * (settings.vertical_sensitivity() as f32 / 5 as f32))
+                    .clamp(-std::f32::consts::FRAC_PI_2, std::f32::consts::FRAC_PI_2),
+            );
+            head_transform.rotation = new_quat;
         }
-        Err(_) => {
-            panic!("Could not find a FirstPersonHead with a Transform component while querying for the player's head!");
+        _ => {
+            panic!("Lookaround up_down() was neither Up nor Down!");
         }
     };
 }
@@ -135,36 +118,33 @@ pub fn rotate_player_body(
     mut query: Query<(&Lookaround, &mut RigidBodyPositionComponent), With<FirstPersonSubject>>,
     settings: Res<GameSettings>,
 ) {
-    match query.get_single_mut() {
-        Ok((lookaround, mut body)) => {
-            let mut rotation = body.position.rotation;
-            match lookaround.left_right() {
-                LookaroundDirection::Left(magnitude) => {
-                    rotation = rotation.append_axisangle_linearized(
-                        &(Vector3::y()
-                            * magnitude
-                            * 0.002
-                            * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
-                    );
-                }
-                LookaroundDirection::Right(magnitude) => {
-                    rotation = rotation.append_axisangle_linearized(
-                        &(Vector3::y()
-                            * -magnitude
-                            * 0.002
-                            * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
-                    );
-                }
-                _ => {
-                    panic!("Lookaround left_right() was neither Left nor Right!")
-                }
-            };
-            body.position.rotation = rotation;
+    let (lookaround, mut body) = query
+        .get_single_mut()
+        .expect("Could not find a player while querying during rotating the player body!");
+
+    let mut rotation = body.position.rotation;
+    match lookaround.left_right() {
+        LookaroundDirection::Left(magnitude) => {
+            rotation = rotation.append_axisangle_linearized(
+                &(Vector3::y()
+                    * magnitude
+                    * 0.002
+                    * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
+            );
         }
-        Err(_) => {
-            panic!("Could not find a player while querying during rotating the player body!");
+        LookaroundDirection::Right(magnitude) => {
+            rotation = rotation.append_axisangle_linearized(
+                &(Vector3::y()
+                    * -magnitude
+                    * 0.002
+                    * (settings.horizontal_sensitivity() as f32 / 5 as f32)),
+            );
         }
-    }
+        _ => {
+            panic!("Lookaround left_right() was neither Left nor Right!")
+        }
+    };
+    body.position.rotation = rotation;
 }
 
 pub fn move_player_body(
@@ -180,41 +160,28 @@ pub fn move_player_body(
     game_config: Res<GameConfig>,
 ) {
     let player_config = game_config.player();
-    match query.get_single_mut() {
-        Ok((movement, subject_transform, mut body_force, body_velocity)) => {
-            if body_velocity.linvel.magnitude() < player_config.max_speed() {
-                let local_z = subject_transform.local_z();
-                let forward = -Vec3::new(local_z.x, 0., local_z.z);
-                let right = Vec3::new(local_z.z, 0., -local_z.x);
-                let left_right_magnitude = match movement.left_right() {
-                    MovementDirection::Left(magnitude) => {
-                        -magnitude * player_config.movement_force()
-                    }
-                    MovementDirection::Right(magnitude) => {
-                        magnitude * player_config.movement_force()
-                    }
-                    _ => {
-                        panic!("Movement left_right() was neither Left nor Right!")
-                    }
-                };
-                let forward_back_magnitude = match movement.forward_back() {
-                    MovementDirection::Forward(magnitude) => {
-                        magnitude * player_config.movement_force()
-                    }
-                    MovementDirection::Back(magnitude) => {
-                        -magnitude * player_config.movement_force()
-                    }
-                    _ => {
-                        panic!("Movement forward_back() was neither Forward nor Back!")
-                    }
-                };
-                body_force.force =
-                    (forward * forward_back_magnitude + right * left_right_magnitude).into();
+    let (movement, subject_transform, mut body_force, body_velocity) = query
+        .get_single_mut()
+        .expect("Could not find a player while querying during moving the player body!");
+    if body_velocity.linvel.magnitude() < player_config.max_speed() {
+        let local_z = subject_transform.local_z();
+        let forward = -Vec3::new(local_z.x, 0., local_z.z);
+        let right = Vec3::new(local_z.z, 0., -local_z.x);
+        let left_right_magnitude = match movement.left_right() {
+            MovementDirection::Left(magnitude) => -magnitude * player_config.movement_force(),
+            MovementDirection::Right(magnitude) => magnitude * player_config.movement_force(),
+            _ => {
+                panic!("Movement left_right() was neither Left nor Right!")
             }
-        }
-        Err(_) => {
-            panic!("Could not find a player while querying during moving the player body!");
-        }
+        };
+        let forward_back_magnitude = match movement.forward_back() {
+            MovementDirection::Forward(magnitude) => magnitude * player_config.movement_force(),
+            MovementDirection::Back(magnitude) => -magnitude * player_config.movement_force(),
+            _ => {
+                panic!("Movement forward_back() was neither Forward nor Back!")
+            }
+        };
+        body_force.force = (forward * forward_back_magnitude + right * left_right_magnitude).into();
     }
 }
 
@@ -231,39 +198,34 @@ pub fn jump_player_body(
     game_config: Res<GameConfig>,
 ) {
     let player_config = game_config.player();
-    match player_query.get_single_mut() {
-        Ok((player_transform, mut body_forces)) => {
-            let collider_set = QueryPipelineColliderComponentsSet(&collider_query);
-            let mut player_global_position = player_transform.translation;
-            player_global_position.y -= (player_config.capsule_height() / 2f32) + 0.01;
-            let ray = Ray::new(
-                player_global_position.into(),
-                Vec3::new(0.0, -1.0, 0.0).into(),
-            );
-            let max_toi = 0.02;
-            let solid = true;
-            let groups = InteractionGroups::all();
-            let filter = None;
+    let (player_transform, mut body_forces) = player_query
+        .get_single_mut()
+        .expect("Could not find a player while querying during making the player body jump!");
 
-            if let Some(_) =
-                rapier_query_pipeline.cast_ray(&collider_set, &ray, max_toi, solid, groups, filter)
-            {
-                let mut jump_vector = vector![0f32, 0f32, 0f32];
-                if keyboard_input.just_pressed(KeyCode::Space) {
-                    jump_vector.y = player_config.jump_force();
-                }
-                for gamepad in gamepads.iter().cloned() {
-                    if gamepad_buttons
-                        .just_pressed(GamepadButton(gamepad, GamepadButtonType::South))
-                    {
-                        jump_vector.y = player_config.jump_force();
-                    }
-                }
-                body_forces.force = (body_forces.force as Vector3<f32>) + jump_vector;
+    let collider_set = QueryPipelineColliderComponentsSet(&collider_query);
+    let mut player_global_position = player_transform.translation;
+    player_global_position.y -= (player_config.capsule_height() / 2f32) + 0.01;
+    let ray = Ray::new(
+        player_global_position.into(),
+        Vec3::new(0.0, -1.0, 0.0).into(),
+    );
+    let max_toi = 0.02;
+    let solid = true;
+    let groups = InteractionGroups::all();
+    let filter = None;
+
+    if let Some(_) =
+        rapier_query_pipeline.cast_ray(&collider_set, &ray, max_toi, solid, groups, filter)
+    {
+        let mut jump_vector = vector![0f32, 0f32, 0f32];
+        if keyboard_input.just_pressed(KeyCode::Space) {
+            jump_vector.y = player_config.jump_force();
+        }
+        for gamepad in gamepads.iter().cloned() {
+            if gamepad_buttons.just_pressed(GamepadButton(gamepad, GamepadButtonType::South)) {
+                jump_vector.y = player_config.jump_force();
             }
         }
-        _ => {
-            panic!("Could not find a player while querying during making the player body jump!");
-        }
+        body_forces.force = (body_forces.force as Vector3<f32>) + jump_vector;
     }
 }

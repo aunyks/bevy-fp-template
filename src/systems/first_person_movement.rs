@@ -58,15 +58,11 @@ pub fn first_person_movement(
         }
     }
 
-    match query.get_single_mut() {
-        Ok(mut movement) => {
-            movement.set_left_right(left_right);
-            movement.set_forward_back(forward_back);
-        }
-        Err(_) => {
-            panic!("Could not find a player when querying using Movement component!");
-        }
-    }
+    let mut movement = query
+        .get_single_mut()
+        .expect("Could not find a player when querying using Movement component!");
+    movement.set_left_right(left_right);
+    movement.set_forward_back(forward_back);
 }
 
 #[cfg(test)]

@@ -107,9 +107,9 @@ fn setup_level(
         .insert(LevelObject);
 
     // Enable first person controls
-    if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Enabled) {
-        panic!("Could not enable First Person Controls while setting up main game level!");
-    };
+    fp_control_settings
+        .set(FirstPersonControlSettings::Enabled)
+        .expect("Could not enable First Person Controls while setting up main game level!");
 }
 
 fn teardown_main_game_level(
@@ -118,7 +118,7 @@ fn teardown_main_game_level(
 ) {
     commands.remove_resource::<AmbientLight>();
     // Enable first person controls
-    if let Err(_) = fp_control_settings.set(FirstPersonControlSettings::Disabled) {
-        panic!("Could not disable First Person Controls while tearing down main game level!");
-    };
+    fp_control_settings
+        .set(FirstPersonControlSettings::Disabled)
+        .expect("Could not disable First Person Controls while tearing down main game level!");
 }

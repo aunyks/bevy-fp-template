@@ -31,12 +31,9 @@ impl Plugin for FirstPersonControlPlugin {
 
 fn lock_pointer(mut windows: ResMut<Windows>) {
     debug!("Locking cursor");
-    let window = match windows.get_primary_mut() {
-        Some(window) => window,
-        None => {
-            panic!("Expected to find window while locking pointer for FirstPersonControlPlugin. None found!")
-        }
-    };
+    let window = windows.get_primary_mut().expect(
+        "Expected to find window while locking pointer for FirstPersonControlPlugin. None found!",
+    );
     window.set_cursor_position(Vec2::new(window.width() / 2f32, window.height() / 2f32));
     window.set_cursor_visibility(false);
     window.set_cursor_lock_mode(true);
@@ -44,12 +41,9 @@ fn lock_pointer(mut windows: ResMut<Windows>) {
 
 fn unlock_pointer(mut windows: ResMut<Windows>) {
     debug!("Unlocking cursor");
-    let window = match windows.get_primary_mut() {
-        Some(window) => window,
-        None => {
-            panic!("Expected to find window while unlocking pointer for FirstPersonControlPlugin. None found!")
-        }
-    };
+    let window = windows.get_primary_mut().expect(
+        "Expected to find window while unlocking pointer for FirstPersonControlPlugin. None found!",
+    );
     window.set_cursor_visibility(true);
     window.set_cursor_lock_mode(false);
 }

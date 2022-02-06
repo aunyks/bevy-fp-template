@@ -244,20 +244,16 @@ fn enter_game_on_resume_game_clicked(
     interaction_query: Query<&Interaction, With<ResumeButton>>,
     mut game_level: ResMut<State<GameLevel>>,
 ) {
-    match interaction_query.get_single() {
-        Ok(interaction) => match *interaction {
-            Interaction::Clicked => {
-                if let Err(_) = game_level.pop() {
-                    panic!("Error occurred while popping GameLevel from the pause menu!");
-                }
-            }
-            _ => {}
-        },
-        _ => {
-            panic!(
-                "Could not find a ResumeButton while setting it up to change GameLevel on click!"
-            );
+    let interaction = interaction_query
+        .get_single()
+        .expect("Could not find a ResumeButton while setting it up to change GameLevel on click!");
+    match *interaction {
+        Interaction::Clicked => {
+            game_level
+                .pop()
+                .expect("Error occurred while popping GameLevel from the pause menu!");
         }
+        _ => {}
     }
 }
 
@@ -265,18 +261,16 @@ fn quit_game_on_quit_game_clicked(
     interaction_query: Query<&Interaction, With<QuitButton>>,
     mut game_level: ResMut<State<GameLevel>>,
 ) {
-    match interaction_query.get_single() {
-        Ok(interaction) => match *interaction {
-            Interaction::Clicked => {
-                if let Err(_) = game_level.set(GameLevel::MainMenu) {
-                    panic!("Error occurred while setting GameLevel to main menu!");
-                }
-            }
-            _ => {}
-        },
-        _ => {
-            panic!("Could not find a QuitButton while setting it up to quit the game on click!");
+    let interaction = interaction_query
+        .get_single()
+        .expect("Could not find a QuitButton while setting it up to quit the game on click!");
+    match *interaction {
+        Interaction::Clicked => {
+            game_level
+                .set(GameLevel::MainMenu)
+                .expect("Error occurred while setting GameLevel to main menu!");
         }
+        _ => {}
     }
 }
 
