@@ -1,5 +1,4 @@
 use crate::states::GameLevel;
-use crate::systems::teardown_game_level;
 use bevy::prelude::*;
 
 #[derive(Component)]
@@ -27,9 +26,7 @@ impl Plugin for PauseMenuLevel {
                     .with_system(quit_game_on_quit_game_clicked),
             )
             .add_system_set(
-                SystemSet::on_exit(GameLevel::PauseMenu)
-                    .with_system(teardown_pause_level)
-                    .with_system(teardown_game_level),
+                SystemSet::on_exit(GameLevel::PauseMenu).with_system(teardown_pause_level),
             );
     }
 }
