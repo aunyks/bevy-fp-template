@@ -76,11 +76,7 @@ pub fn add_player(
                 .insert(Transform::from_rotation(Quat::from_rotation_x(
                     -std::f32::consts::FRAC_PI_4,
                 )))
-                .insert_bundle(PerspectiveCameraBundle {
-                    // Put the camera at the top of the cylinder / bottom of the topmost hemisphere
-                    transform: Transform::from_xyz(0f32, player_halfheight_raw, 0f32),
-                    ..Default::default()
-                });
+                .insert_bundle(PerspectiveCameraBundle::default());
         });
 }
 
